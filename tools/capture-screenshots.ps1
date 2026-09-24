@@ -1,13 +1,62 @@
-# Captures the trainer window for every tab into docs/screenshots.
-# The game (or a fake bridge) must be running so the UI has data to show.
+# Captures the trainer window for every tab into docs\screenshots.
+#
+#   powershell -File tools\capture-screenshots.ps1                 # needs the game running for live data
+#   powershell -File tools\capture-screenshots.ps1 -CropExisting   # just re-crop the current PNGs
+#
+# The top header row (which shows the local game path) is cropped away by default,
+# so the published screenshots never contain machine specific paths.
 # ASCII-only file.
 
 param(
-    [string]$Exe = 'E:\01TestProject\GK2Trainer\src\GK2Trainer.App\bin\Debug\net10.0-windows\GK2Trainer.exe',
-    [string]$OutDir = 'E:\01TestProject\GK2Trainer\docs\screenshots'
+    [string]$Exe = '',
+    [string]$OutDir = '',
+    [int]$CropTop = 72,
+    [switch]$CropExisting
 )
 
 $ErrorActionPreference = 'Stop'
+$root = Split-Path -Parent $PSScriptRoot
+
+if (-not $Exe) {
+    $Exe = Join-Path $root 'src\GK2Trainer.App\bin\Debug\net10.0-windows\GK2Trainer.exe'
+}
+if (-not $OutDir) {
+    $OutDir = Join-Path $root 'docs\screenshots'
+}
+
+Add-Type -AssemblyName System.Drawing
+if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir -Force | Out-Null }
+
+function Crop-Top([string]$path, [int]$pixels) {
+    if ($pixels -le 0) { return }
+
+    # GDI+ refuses to save over the file it read from, so load from memory and
+    # write through a temp file.
+    $bytes = [System.IO.File]::ReadAllBytes($path)
+    $stream = New-Object System.IO.MemoryStream(, $bytes)
+    $image = [System.Drawing.Image]::FromStream($stream)
+    try {
+        $rect = New-Object System.Drawing.Rectangle 0, $pixels, $image.Width, ($image.Height - $pixels)
+        $crop = $image.Clone($rect, $image.PixelFormat)
+        try {
+            $temp = $path + '.tmp'
+            $crop.Save($temp, [System.Drawing.Imaging.ImageFormat]::Png)
+        } finally { $crop.Dispose() }
+    } finally {
+        $image.Dispose()
+        $stream.Dispose()
+    }
+
+    Move-Item ($path + '.tmp') $path -Force
+}
+
+if ($CropExisting) {
+    foreach ($file in Get-ChildItem $OutDir -Filter '*.png') {
+        Crop-Top $file.FullName $CropTop
+        Write-Output "cropped $($file.Name) (top $CropTop px)"
+    }
+    return
+}
 
 $code = @'
 using System;
@@ -21,9 +70,6 @@ public class Win {
 }
 '@
 Add-Type -TypeDefinition $code -Language CSharp
-Add-Type -AssemblyName System.Drawing
-
-if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir -Force | Out-Null }
 
 $tabs = @(
     @{ Index = 0; Name = '01-resources' },
@@ -65,6 +111,8 @@ foreach ($tab in $tabs) {
     $file = Join-Path $OutDir ($tab.Name + '.png')
     $bitmap.Save($file, [System.Drawing.Imaging.ImageFormat]::Png)
     $bitmap.Dispose()
+
+    Crop-Top $file $CropTop
     Write-Output "$($tab.Name).png  ${width}x${height}  printwindow=$ok"
 }
 

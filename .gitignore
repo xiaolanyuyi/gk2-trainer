@@ -1,12 +1,11 @@
+# build output
 bin/
 obj/
 dist/
 
-__pycache__/
-*.pyc
-
+# editor state
 .vs/
 *.user
 
-# bridge files are written into the game's user folder, never into the repo
-*.eoctrainer.bak
+# The trainer's bridge files (command.json / state.json / log.txt) live in the
+# game's user folder, never inside this repository.

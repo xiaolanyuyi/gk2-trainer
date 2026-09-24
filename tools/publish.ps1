@@ -1,13 +1,17 @@
 # Packages the trainer as a single executable.
 #
-#   powershell -File tools\publish.ps1                  # needs .NET 10 runtime on the target
-#   powershell -File tools\publish.ps1 -SelfContained    # fully standalone (~60 MB zipped ~40 MB)
+#   powershell -File tools\publish.ps1                   # needs .NET 10 runtime on the target
+#   powershell -File tools\publish.ps1 -SelfContained     # fully standalone (zip ~40 MB)
+#   powershell -File tools\publish.ps1 -GameDir "<...>\Graveyard Keeper 2"
 #
-# The plugin is embedded in the app, so one exe can install everything.
+# The plugin is embedded in the app, so one exe can install everything. The game
+# directory is only needed to build the plugin and is auto-detected when omitted.
+# ASCII-only file.
 
 param(
     [switch]$SelfContained,
-    [string]$Configuration = 'Release'
+    [string]$Configuration = 'Release',
+    [string]$GameDir = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -16,11 +20,18 @@ $plugin = Join-Path $root 'plugin\GK2Trainer.Plugin.csproj'
 $project = Join-Path $root 'src\GK2Trainer.App\GK2Trainer.App.csproj'
 $output = if ($SelfContained) { Join-Path $root 'dist\standalone' } else { Join-Path $root 'dist' }
 
+if (-not $GameDir) {
+    $GameDir = & "$PSScriptRoot\find-game.ps1"
+}
+if (-not $GameDir) {
+    throw "找不到游戏目录（构建插件需要游戏程序集）。请加 -GameDir `"<...>\Graveyard Keeper 2`""
+}
+
 if (Test-Path $output) { Remove-Item $output -Recurse -Force }
 
-# The app embeds the plugin dll, so it has to be built first.
+Write-Host "game directory: $GameDir"
 Write-Host "building plugin ..."
-& dotnet build $plugin -c $Configuration --nologo | Select-Object -Last 2
+& dotnet build $plugin -c $Configuration -p:GameDir=$GameDir --nologo | Select-Object -Last 2
 
 $arguments = @(
     "publish", $project,

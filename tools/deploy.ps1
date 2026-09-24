@@ -1,21 +1,33 @@
 # Builds the plugin and copies it into the game's BepInEx\plugins folder.
 #
 #   powershell -File tools\deploy.ps1
-#   powershell -File tools\deploy.ps1 -GameDir "D:\Games\Graveyard Keeper 2"
+#   powershell -File tools\deploy.ps1 -GameDir "D:\Steam\steamapps\common\Graveyard Keeper 2"
+#
+# The game directory is auto-detected (running process -> app settings -> Steam
+# libraries) when -GameDir is omitted.
 
 param(
-    [string]$GameDir = 'E:\Games\Graveyard Keeper 2',
+    [string]$GameDir = '',
     [string]$Configuration = 'Release'
 )
 
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
+
+if (-not $GameDir) {
+    $GameDir = & "$PSScriptRoot\find-game.ps1"
+}
+if (-not $GameDir) {
+    throw "找不到游戏目录，请显式指定：powershell -File tools\deploy.ps1 -GameDir `"<...>\Graveyard Keeper 2`""
+}
+Write-Host "game directory: $GameDir"
+
 $project = Join-Path $root 'plugin\GK2Trainer.Plugin.csproj'
 $plugins = Join-Path $GameDir 'BepInEx\plugins'
 $output = Join-Path $root 'plugin\bin'
 
 Write-Host "building $project ..."
-& dotnet build $project -c $Configuration -p:GameDir=$GameDir --nologo | Select-Object -Last 4
+& dotnet build $project -c $Configuration -p:GameDir=$GameDir --nologo | Select-Object -Last 3
 
 $dll = Get-ChildItem $output -Recurse -Filter 'GK2Trainer.Plugin.dll' |
     Sort-Object LastWriteTime -Descending | Select-Object -First 1
@@ -46,4 +58,3 @@ Write-Host "deployed: $($dll.FullName) -> $plugins"
 Write-Host "a running game keeps the old code until it is restarted."
 Write-Host "after restarting, check:"
 Write-Host "  $(Join-Path $GameDir 'BepInEx\LogOutput.log')"
-Write-Host "  $env:USERPROFILE\AppData\LocalLow\Lazy Bear Games\Graveyard Keeper 2\Trainer\state.json"

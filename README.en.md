@@ -5,7 +5,7 @@
 A **runtime stat trainer** for *Graveyard Keeper 2*: edit money, tech spheres, energy/insanity/stamina,
 health, movement speed, game speed, perks, tech unlocks and inventory items while you play.
 
-**[⬇ Download the latest release](https://github.com/xiaolanyuyi/gk2-trainer/releases/latest)** ·
+**[⬇ Download the latest release](../../releases/latest)** ·
 [Usage](#install--usage) · [Troubleshooting](#troubleshooting) · [Reverse engineering notes](docs/recon.md)
 
 - **It calls the game's own API** — money goes through `PlayerData.SetRes("money", …)` (that is exactly
@@ -123,8 +123,8 @@ Two design details worth knowing:
 ### 1. Run the trainer
 
 Download the release and run it. It locates the game by checking the running process first, then a stored
-path, then the Steam libraries — a non-Steam install (like `E:\Games\…`) works too. Otherwise use
-「选择游戏目录…」 to point it at the game folder.
+path, then the Steam libraries — an installation on another drive or a non-Steam copy works just as well.
+Otherwise use 「选择游戏目录…」 to point it at the game folder.
 
 ### 2. Install the plugin
 

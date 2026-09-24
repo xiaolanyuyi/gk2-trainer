@@ -27,7 +27,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <GameDir Condition="'$(GameDir)' == ''">E:\Games\Graveyard Keeper 2</GameDir>
     <PluginDll>$(MSBuildThisFileDirectory)..\..\plugin\bin\Release\GK2Trainer.Plugin.dll</PluginDll>
   </PropertyGroup>
 

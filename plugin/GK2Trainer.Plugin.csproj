@@ -12,9 +12,8 @@
     through those files (see docs/recon.md and the game-trainer skill).
 
     Build:
-        dotnet build plugin\GK2Trainer.Plugin.csproj
-    The game directory defaults to E:\Games\Graveyard Keeper 2 and can be
-    overridden:  dotnet build -p:GameDir="D:\Games\Graveyard Keeper 2"
+        dotnet build src\GK2Trainer.App\GK2Trainer.App.csproj
+    The plugin dll has to be built first (it is embedded below).
   -->
 
   <PropertyGroup>
@@ -30,10 +29,19 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <GameDir Condition="'$(GameDir)' == ''">E:\Games\Graveyard Keeper 2</GameDir>
+    <!-- 游戏目录必须由外部指定（仓库里不含任何硬编码路径）：
+           dotnet build plugin\GK2Trainer.Plugin.csproj -p:GameDir="<...>\Graveyard Keeper 2"
+         或直接用 tools\deploy.ps1 / tools\publish.ps1 —— 它们会自动探测游戏目录。 -->
     <ManagedDir>$(GameDir)\GraveyardKeeper2_Data\Managed</ManagedDir>
     <BepInExCore>$(GameDir)\BepInEx\core</BepInExCore>
   </PropertyGroup>
+
+  <Target Name="EnsureGameDir" BeforeTargets="PrepareForBuild">
+    <Error Condition="'$(GameDir)' == ''"
+           Text="请指定游戏目录：-p:GameDir=&quot;...\Graveyard Keeper 2&quot;（或使用 tools\deploy.ps1 自动探测）" />
+    <Error Condition="!Exists('$(ManagedDir)\Assembly-CSharp.dll')"
+           Text="在 $(GameDir) 下找不到 GraveyardKeeper2_Data\Managed\Assembly-CSharp.dll，请确认路径。" />
+  </Target>
 
   <ItemGroup>
     <Reference Include="BepInEx">
