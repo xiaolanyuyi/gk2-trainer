@@ -1,0 +1,12 @@
+bin/
+obj/
+dist/
+
+__pycache__/
+*.pyc
+
+.vs/
+*.user
+
+# bridge files are written into the game's user folder, never into the repo
+*.eoctrainer.bak

@@ -1,0 +1,43 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Graveyard Keeper 2 trainer - desktop app.
+
+    It talks to the in-game BepInEx plugin through two JSON files in the game's
+    persistent data folder (see docs/recon.md):
+        Trainer\command.json   app  -> game
+        Trainer\state.json     game -> app
+        Trainer\log.txt        game -> app
+
+    The plugin dll is embedded so the app can install/update it itself.
+    Build order: plugin first, then this project.
+  -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>GK2Trainer.App</RootNamespace>
+    <AssemblyName>GK2Trainer</AssemblyName>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <EnableDefaultEmbeddedResourceItems>true</EnableDefaultEmbeddedResourceItems>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GameDir Condition="'$(GameDir)' == ''">E:\Games\Graveyard Keeper 2</GameDir>
+    <PluginDll>$(MSBuildThisFileDirectory)..\..\plugin\bin\Release\GK2Trainer.Plugin.dll</PluginDll>
+  </PropertyGroup>
+
+  <Target Name="EnsurePluginBuilt" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(PluginDll)')"
+           Text="先构建插件：dotnet build plugin\GK2Trainer.Plugin.csproj" />
+  </Target>
+
+  <ItemGroup>
+    <EmbeddedResource Include="$(PluginDll)" LogicalName="plugin.GK2Trainer.Plugin.dll" />
+  </ItemGroup>
+
+</Project>

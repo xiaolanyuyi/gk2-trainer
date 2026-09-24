@@ -1,0 +1,74 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Minimal BepInEx 5 plugin for Graveyard Keeper 2.
+
+    It does three things:
+      1. writes a state snapshot (money / resources / hp / day) to state.json
+      2. reads command.json and applies operations through the game's own API
+      3. keeps a small log.txt for diagnosis
+
+    That is the whole "game side" of the trainer; the desktop app talks to it
+    through those files (see docs/recon.md and the game-trainer skill).
+
+    Build:
+        dotnet build plugin\GK2Trainer.Plugin.csproj
+    The game directory defaults to E:\Games\Graveyard Keeper 2 and can be
+    overridden:  dotnet build -p:GameDir="D:\Games\Graveyard Keeper 2"
+  -->
+
+  <PropertyGroup>
+    <!-- Unity 6000 assemblies are built against netstandard 2.1. -->
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <AssemblyName>GK2Trainer.Plugin</AssemblyName>
+    <RootNamespace>GK2Trainer</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS0436</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <GameDir Condition="'$(GameDir)' == ''">E:\Games\Graveyard Keeper 2</GameDir>
+    <ManagedDir>$(GameDir)\GraveyardKeeper2_Data\Managed</ManagedDir>
+    <BepInExCore>$(GameDir)\BepInEx\core</BepInExCore>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="BepInEx">
+      <HintPath>$(BepInExCore)\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExCore)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- The game's own code: no reflection needed, the trainer calls real methods. -->
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedDir)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- GameResSystemBase and friends live in the engine-agnostic LazyBear layer. -->
+    <Reference Include="LazyBearTechnology">
+      <HintPath>$(ManagedDir)\LazyBearTechnology.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ManagedDir)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Facade assembly: BepInEx's BaseUnityPlugin derives from MonoBehaviour,
+         which Unity type-forwards through UnityEngine.dll. -->
+    <Reference Include="UnityEngine">
+      <HintPath>$(ManagedDir)\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <!-- Ships with the game, so the plugin needs no extra dependency. -->
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>$(ManagedDir)\Newtonsoft.Json.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>
